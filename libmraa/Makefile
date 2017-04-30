@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libmraa
-PKG_VERSION:=1.6.0
+PKG_VERSION:=1.6.1
 
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
