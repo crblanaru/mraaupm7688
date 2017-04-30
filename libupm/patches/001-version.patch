@@ -1,0 +1,880 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index e534962..480ffc9 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -204,14 +204,7 @@ include(GNUInstallDirs)
+ set (LIB_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Installation path for libraries")
+ 
+ # Make a version file containing the current version from git.
+-include (GetGitRevisionDescription)
+-git_describe (VERSION "--tags")
+-# If git_describe fails, use a dirty version
+-if (${VERSION} MATCHES -NOTFOUND)
+-  set (VERSION "v1.2.0")
+-  message (WARNING "Failed to retrieve UPM version with 'git describe' (using "
+-      "${VERSION}). Check that git is installed and this is a valid git repo.")
+-endif ()
++set (VERSION "v1.2.0")
+ 
+ message (STATUS "UPM Version ${VERSION}")
+ 
+diff --git a/src/at42qt1070/at42qt1070.cxx b/src/at42qt1070/at42qt1070.cxx
+index fed9f38..24376b6 100644
+--- a/src/at42qt1070/at42qt1070.cxx
++++ b/src/at42qt1070/at42qt1070.cxx
+@@ -53,7 +53,7 @@ AT42QT1070::AT42QT1070(int bus, uint8_t address)
+         return;
+     }
+ 
+-    if (readChipID() != 0x2E) {
++    if (readChipID() != 0x1b && readChipID() != 0x2E) {
+         throw std::runtime_error("Chip ID does not match the expected value (2Eh)");
+     }
+ 
+diff --git a/src/bacnetmstp/bacnetmstp.cxx b/src/bacnetmstp/bacnetmstp.cxx
+index 7807c17..39c0b5e 100644
+--- a/src/bacnetmstp/bacnetmstp.cxx
++++ b/src/bacnetmstp/bacnetmstp.cxx
+@@ -314,26 +314,32 @@ void BACNETMSTP::initMaster(string port, int baudRate,
+   // maxMaster must be less than or equal to 127
+   if (maxMaster < 0 || maxMaster > DEFAULT_MAX_MASTER)
+     {
++      std::ostringstream str;
++      str << DEFAULT_MAX_MASTER ;
+       throw out_of_range(string(__FUNCTION__)
+                               + ": maxMaster must be between 0 and "
+-                              + to_string(DEFAULT_MAX_MASTER));
++                              + str.str());
+     }
+ 
+   // As a master ourselves, we must have a MAC address also within the
+   // constraints of maxMaster
+   if (macAddr < 0 || macAddr > DEFAULT_MAX_MASTER)
+     {
++      std::ostringstream str;
++      str << DEFAULT_MAX_MASTER ;
+       throw out_of_range(string(__FUNCTION__)
+                               + ": macAddr must be between 0 and "
+-                              + to_string(DEFAULT_MAX_MASTER));
++                              + str.str());
+     }
+ 
+   // this should be unique on the network
+   if (deviceInstanceID >= BACNET_MAX_INSTANCE)
+     {
++      std::ostringstream str;
++      str << BACNET_MAX_INSTANCE ;
+       throw out_of_range(string(__FUNCTION__)
+                               + ": deviceInstanceID must be less than "
+-                              + to_string(BACNET_MAX_INSTANCE)
++                              + str.str()
+                               + ", and must be unique on the network");
+     }
+ 
+@@ -584,9 +590,11 @@ bool BACNETMSTP::readProperty(uint32_t targetDeviceInstanceID,
+   // some sanity checking...
+   if (objInstance >= BACNET_MAX_INSTANCE)
+     {
++      std::ostringstream str;
++      str << BACNET_MAX_INSTANCE;
+       throw out_of_range(string(__FUNCTION__)
+                               + ": objInstance must be less than "
+-                              + to_string(BACNET_MAX_INSTANCE));
++                              + str.str());
+     }
+ 
+   // fill in the command structure and dispatch
+@@ -620,9 +628,11 @@ bool BACNETMSTP::writeProperty(uint32_t targetDeviceInstanceID,
+   // some sanity checking...
+   if (objInstance >= BACNET_MAX_INSTANCE)
+     {
++      std::ostringstream str;
++      str << BACNET_MAX_INSTANCE;
+       throw out_of_range(string(__FUNCTION__)
+                               + ": objInstance must be less than "
+-                              + to_string(BACNET_MAX_INSTANCE));
++                              + str.str());
+     }
+ 
+   // fill in the command structure and dispatch
+@@ -681,9 +691,11 @@ float BACNETMSTP::getDataTypeReal(int index)
+         case BACNET_APPLICATION_TAG_SIGNED_INT:
+           return float(getDataTypeSignedInt(index));
+         default:
++          std::ostringstream str;
++          str << int(getDataType(index)) ;
+           throw invalid_argument(string(__FUNCTION__)
+                                       + ": data type ("
+-                                      + to_string(int(getDataType(index)))
++                                      + str.str()
+                                       + ") is not convertible to Real");
+         }
+     }
+@@ -694,9 +706,11 @@ bool BACNETMSTP::getDataTypeBoolean(int index)
+   if (getDataType(index) == BACNET_APPLICATION_TAG_BOOLEAN)
+     return ((m_returnedValue.at(index).type.Boolean) ? true : false);
+   else
++    std::ostringstream str;
++    str << int(getDataType(index)) ;
+     throw invalid_argument(string(__FUNCTION__)
+                                 + ": data type ("
+-                                + to_string(int(getDataType(index)))
++                                + str.str()
+                                 + ") is not convertible to Bool");
+ }
+ 
+@@ -705,9 +719,11 @@ unsigned int BACNETMSTP::getDataTypeUnsignedInt(int index)
+   if (getDataType(index) == BACNET_APPLICATION_TAG_UNSIGNED_INT)
+     return m_returnedValue.at(index).type.Unsigned_Int;
+   else
++    std::ostringstream str;
++    str << int(getDataType(index)) ;
+     throw invalid_argument(string(__FUNCTION__)
+                                 + ": data type ("
+-                                + to_string(int(getDataType(index)))
++                                + str.str()
+                                 + ") is not convertible to UnsignedInt");
+ }
+ 
+@@ -716,9 +732,11 @@ int BACNETMSTP::getDataTypeSignedInt(int index)
+   if (getDataType(index) == BACNET_APPLICATION_TAG_SIGNED_INT)
+     return m_returnedValue.at(index).type.Signed_Int;
+   else
++    std::ostringstream str;
++    str << int(getDataType(index)) ;
+     throw invalid_argument(string(__FUNCTION__)
+                                 + ": data type ("
+-                                + to_string(int(getDataType(index)))
++                                + str.str()
+                                 + ") is not convertible to SignedInt");
+ }
+ 
+@@ -744,9 +762,11 @@ double BACNETMSTP::getDataTypeDouble(int index)
+         case BACNET_APPLICATION_TAG_SIGNED_INT:
+           return double(getDataTypeSignedInt(index));
+         default:
++          std::ostringstream str;
++          str << int(getDataType(index)) ;
+           throw invalid_argument(string(__FUNCTION__)
+                                       + ": data type ("
+-                                      + to_string(int(getDataType(index)))
++                                      + str.str()
+                                       + ") is not convertible to Double");
+         }
+     }
+@@ -758,9 +778,11 @@ unsigned int BACNETMSTP::getDataTypeEnum(int index)
+   if (getDataType(index) == BACNET_APPLICATION_TAG_ENUMERATED)
+     return m_returnedValue.at(index).type.Enumerated;
+   else
++    std::ostringstream str;
++    str << int(getDataType(index)) ;
+     throw invalid_argument(string(__FUNCTION__)
+                                 + ": data type ("
+-                                + to_string(int(getDataType(index)))
++                                + str.str()
+                                 + ") is not convertible to Enum");
+ }
+ 
+@@ -772,21 +794,29 @@ string BACNETMSTP::getDataTypeString(int index)
+   switch(getDataType(index))
+     {
+     case BACNET_APPLICATION_TAG_REAL:
+-      retval = to_string(getDataTypeReal(index));
++      std::ostringstream str;
++      str << getDataTypeReal(index) ;
++      retval = str.str();
+       break;
+ 
+ #if defined(BACAPP_DOUBLE)
+     case BACNET_APPLICATION_TAG_DOUBLE:
+-      retval = to_string(getDataTypeDouble(index));
++      std::ostringstream str;
++      str << getDataTypeDouble(index) ;
++      retval = str.str();
+       break;
+ #endif // BACAPP_DOUBLE
+ 
+     case BACNET_APPLICATION_TAG_UNSIGNED_INT:
+-      retval = to_string(getDataTypeUnsignedInt(index));
++      std::ostringstream str;
++      str << getDataTypeUnsignedInt(index) ;
++      retval = str.str();
+       break;
+ 
+     case BACNET_APPLICATION_TAG_SIGNED_INT:
+-      retval = to_string(getDataTypeSignedInt(index));
++      std::ostringstream str;
++      str << getDataTypeSignedInt(index) ;
++      retval = str.str();
+       break;
+ 
+     case BACNET_APPLICATION_TAG_BOOLEAN:
+@@ -829,9 +859,11 @@ string BACNETMSTP::getDataTypeString(int index)
+       break;
+ 
+     default:
++      std::ostringstream str;
++      str << int(getDataType(index)) ;
+       throw invalid_argument(string(__FUNCTION__)
+                                   + ": data type ("
+-                                  + to_string(int(getDataType(index)))
++                                  + str.str()
+                                   + ") is not convertible to String");
+       break;
+     }
+@@ -891,9 +923,11 @@ BACNET_APPLICATION_DATA_VALUE BACNETMSTP::createDataString(string value)
+ {
+   if (value.size() > (MAX_CHARACTER_STRING_BYTES - 1))
+     {
++      std::ostringstream str;
++      str << MAX_CHARACTER_STRING_BYTES - 1 ;
+       throw invalid_argument(string(__FUNCTION__)
+                                   + ": value must be less than or equal to "
+-                                  + to_string(MAX_CHARACTER_STRING_BYTES - 1)
++                                  + str.str()
+                                   + " characters long");
+     }
+ 
+diff --git a/src/bacnetmstp/bacnetutil.cxx b/src/bacnetmstp/bacnetutil.cxx
+index beec702..33fc1f1 100644
+--- a/src/bacnetmstp/bacnetutil.cxx
++++ b/src/bacnetmstp/bacnetutil.cxx
+@@ -525,10 +525,12 @@ string BACNETUTIL::lookupMultiStateValueText(uint32_t objInstance,
+ 
+   // verify that value is valid for this object
+   if (value == 0 || value > m_msvInfo[objInstance].numStates)
++    std::ostringstream str;
++    str << m_msvInfo[objInstance].numStates;
+     throw out_of_range(string(__FUNCTION__)
+                             + ": value supplied is invalid. Maximum "
+                             + "allowed values are 1 to "
+-                            + to_string(m_msvInfo[objInstance].numStates)
++                            + str.str()
+                             + " for this object");
+ 
+ 
+@@ -549,7 +551,9 @@ string BACNETUTIL::lookupMultiStateValueText(uint32_t objInstance,
+     }
+ 
+   // no stateList text available, so just return value as a string
+-  return to_string(value);
++  std::ostringstream str;
++  str << value;
++  return str.str();
+ }
+ 
+ unsigned int BACNETUTIL::getMultiStateValueMaxStates(uint32_t objInstance)
+@@ -576,10 +580,12 @@ void BACNETUTIL::setMultiStateValue(uint32_t objInstance,
+   // Check value against the valid limits
+ 
+   if (value == 0 || value > m_msvInfo[objInstance].numStates)
++    std::ostringstream str;
++    str << m_msvInfo[objInstance].numStates ;
+     throw invalid_argument(string(__FUNCTION__)
+                                 + ": value supplied is invalid. Maximum "
+                                 + "allowed values are 1 to "
+-                                + to_string(m_msvInfo[objInstance].numStates)
++                                + str.str()
+                                 + " for this object");
+ 
+   // Write the value
+diff --git a/src/dfrec/dfrec.cxx b/src/dfrec/dfrec.cxx
+index 1c89962..3256aab 100644
+--- a/src/dfrec/dfrec.cxx
++++ b/src/dfrec/dfrec.cxx
+@@ -25,6 +25,7 @@
+ #include <iostream>
+ #include <string>
+ #include <stdexcept>
++#include <sstream>
+ 
+ #include "dfrec.hpp"
+ 
+@@ -52,9 +53,11 @@ void DFREC::update()
+   // we only want to throw on "real" fatal errors
+   if (!(rv == UPM_ERROR_OUT_OF_RANGE || rv == UPM_SUCCESS))
+     {
++      std::ostringstream str;
++      str << int(rv);
+       throw std::runtime_error(string(__FUNCTION__)
+                                + ": dfrec_update() failed with UPM error "
+-                               + std::to_string(int(rv)) );
++                               + str.str() );
+     }
+ }
+ 
+diff --git a/src/dfrorp/dfrorp.cxx b/src/dfrorp/dfrorp.cxx
+index 1eeaf38..4345b49 100644
+--- a/src/dfrorp/dfrorp.cxx
++++ b/src/dfrorp/dfrorp.cxx
+@@ -24,6 +24,7 @@
+ 
+ #include <iostream>
+ #include <stdexcept>
++#include <sstream>
+ 
+ #include "dfrorp.hpp"
+ 
+@@ -49,9 +50,11 @@ void DFRORP::update()
+ 
+   if ((rv = dfrorp_update(m_dfrorp)))
+     {
++      std::ostringstream str;
++      str << int(rv);
+       throw std::runtime_error(string(__FUNCTION__)
+                                + ": dfrorp_update() failed with UPM error "
+-                               + to_string(int(rv)) );
++                               + str.str() );
+     }
+ }
+ 
+diff --git a/src/l3gd20/l3gd20.cxx b/src/l3gd20/l3gd20.cxx
+index 4826831..92c82c2 100755
+--- a/src/l3gd20/l3gd20.cxx
++++ b/src/l3gd20/l3gd20.cxx
+@@ -27,6 +27,7 @@
+ #include <string>
+ #include <stdexcept>
+ #include <string.h>
++#include <sstream>
+ #include <math.h>
+ #include "l3gd20.hpp"
+ 
+@@ -136,13 +137,17 @@ L3GD20::L3GD20(int bus, int addr)
+   uint8_t cid = getChipID();
+   if (!(cid == L3GD20_DEFAULT_CHIP_ID || cid == L3GD20H_DEFAULT_CHIP_ID))
+     {
++      std::ostringstream chipid20, chipid20h, cidstr;
++      chipid20 << L3GD20_DEFAULT_CHIP_ID;
++      chipid20h << L3GD20H_DEFAULT_CHIP_ID;
++      cidstr << int(cid);
+       throw std::runtime_error(std::string(__FUNCTION__) +
+                                ": Invalid Chip ID: expected "
+-                               + to_string(L3GD20_DEFAULT_CHIP_ID)
++                               + chipid20.str()
+                                + " or "
+-                               + to_string(L3GD20H_DEFAULT_CHIP_ID)
++                               + chipid20h.str()
+                                + ", got "
+-                               + to_string(int(cid)));
++                               + cidstr.str() );
+       return;
+     }
+ 
+@@ -280,9 +285,11 @@ void L3GD20::update()
+ 
+   if (readRegs(REG_OUT_X_L, buf, bufLen) != bufLen)
+     {
++      std::ostringstream str;
++      str << bufLen ;
+       throw std::runtime_error(std::string(__FUNCTION__)
+                                + ": readRegs() failed to read "
+-                               + to_string(bufLen)
++                               + str.str()
+                                + " bytes");
+     }
+ 
+diff --git a/src/max30100/max30100.cxx b/src/max30100/max30100.cxx
+index 01f64a3..551fee3 100644
+--- a/src/max30100/max30100.cxx
++++ b/src/max30100/max30100.cxx
+@@ -24,6 +24,7 @@
+ 
+ #include <stdexcept>
+ #include <string>
++#include <sstream>
+ 
+ #include "max30100.hpp"
+ 
+@@ -31,8 +32,10 @@ using namespace upm;
+ 
+ void max30100_throw(std::string func, std::string cmd, upm_result_t result)
+ {
++    std::ostringstream str;
++    str << result;
+     throw std::runtime_error(func + ": " + cmd + " failed, " +
+-            "upm_result_t: " + std::to_string(result));
++            "upm_result_t: " + str.str() );
+ }
+ 
+ MAX30100::MAX30100(int16_t i2c_bus) : _dev(max30100_init(i2c_bus))
+diff --git a/src/mma7361/mma7361.cxx b/src/mma7361/mma7361.cxx
+index f80d5e8..a25f4bf 100644
+--- a/src/mma7361/mma7361.cxx
++++ b/src/mma7361/mma7361.cxx
+@@ -25,6 +25,7 @@
+ #include <iostream>
+ #include <stdexcept>
+ #include <string>
++#include <sstream>
+ 
+ #include "mma7361.hpp"
+ 
+@@ -65,9 +66,11 @@ bool MMA7361::isInFreefall()
+   
+   if ((rv = mma7361_freefall(m_mma7361, &freefall)))
+     {
++      std::ostringstream str;
++      str << int(rv);
+       throw std::runtime_error(string(__FUNCTION__)
+                                + ": mma7361_freefall() failed with UPM error "
+-                               + to_string(int(rv)) );
++                               + str.str() );
+     }
+ 
+   return freefall;
+@@ -79,9 +82,11 @@ void MMA7361::enableSelftest(bool enable)
+   
+   if ((rv = mma7361_selftest(m_mma7361, enable)))
+     {
++      std::ostringstream str;
++      str << int(rv);
+       throw std::runtime_error(string(__FUNCTION__)
+                                + ": mma7361_selftest() failed with UPM error "
+-                               + to_string(int(rv)) );
++                               + str.str() );
+     }
+ }
+ 
+@@ -91,9 +96,11 @@ void MMA7361::update()
+   
+   if ((rv = mma7361_update(m_mma7361)))
+     {
++      std::ostringstream str;
++      str << int(rv);
+       throw std::runtime_error(string(__FUNCTION__)
+                                + ": mma7361_update() failed with UPM error "
+-                               + to_string(int(rv)) );
++                               + str.str() );
+     }
+ }
+ 
+diff --git a/src/ms5611/CMakeLists.txt b/src/ms5611/CMakeLists.txt
+deleted file mode 100644
+index 14ec624..0000000
+--- a/src/ms5611/CMakeLists.txt
++++ /dev/null
+@@ -1,5 +0,0 @@
+-set (libname "ms5611")
+-set (libdescription "Barometric Pressure and Temperature Sensor")
+-set (module_src ${libname}.cxx)
+-set (module_hpp ${libname}.hpp)
+-upm_module_init(mraa interfaces)
+diff --git a/src/ms5611/javaupm_ms5611.i b/src/ms5611/javaupm_ms5611.i
+deleted file mode 100644
+index 3ef03e0..0000000
+--- a/src/ms5611/javaupm_ms5611.i
++++ /dev/null
+@@ -1,26 +0,0 @@
+-%module javaupm_ms5611
+-%include "../upm.i"
+-
+-%import "../interfaces/javaupm_iTemperatureSensor.i"
+-%import "../interfaces/javaupm_iPressureSensor.i"
+-
+-%typemap(javaimports) SWIGTYPE %{
+-import upm_interfaces.*;
+-%}
+-
+-%{
+-    #include "ms5611.hpp"
+-%}
+-
+-%include "ms5611.hpp"
+-
+-%pragma(java) jniclasscode=%{
+-    static {
+-        try {
+-            System.loadLibrary("javaupm_ms5611");
+-        } catch (UnsatisfiedLinkError e) {
+-            System.err.println("Native code library failed to load. \n" + e);
+-            System.exit(1);
+-        }
+-    }
+-%}
+diff --git a/src/ms5611/jsupm_ms5611.i b/src/ms5611/jsupm_ms5611.i
+deleted file mode 100644
+index 529dee2..0000000
+--- a/src/ms5611/jsupm_ms5611.i
++++ /dev/null
+@@ -1,8 +0,0 @@
+-%module jsupm_ms5611
+-%include "../upm.i"
+-
+-%{
+-    #include "ms5611.hpp"
+-%}
+-
+-%include "ms5611.hpp"
+diff --git a/src/ms5611/ms5611.cxx b/src/ms5611/ms5611.cxx
+deleted file mode 100644
+index 29029b6..0000000
+--- a/src/ms5611/ms5611.cxx
++++ /dev/null
+@@ -1,214 +0,0 @@
+-/*
+- * Author: Henry Bruce <henry.bruce@intel.com>
+- * Copyright (c) 2016 Intel Corporation.
+- *
+- * Permission is hereby granted, free of charge, to any person obtaining
+- * a copy of this software and associated documentation files (the
+- * "Software"), to deal in the Software without restriction, including
+- * without limitation the rights to use, copy, modify, merge, publish,
+- * distribute, sublicense, and/or sell copies of the Software, and to
+- * permit persons to whom the Software is furnished to do so, subject to
+- * the following conditions:
+- *
+- * The above copyright notice and this permission notice shall be
+- * included in all copies or substantial portions of the Software.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- */
+-
+-#include <iostream>
+-#include <unistd.h>
+-#include <string.h>
+-#include <time.h>
+-#include "ms5611.hpp"
+-
+-
+-// Used to prevent silent failure in mraa_i2c_write()
+-// Value come from I2C_SMBUS_I2C_BLOCK_MAX in i2c driver
+-#define MAX_I2C_WRITE_SIZE 32
+-
+-#define MS5611_CMD_ADC_READ           (0x00)
+-#define MS5611_CMD_RESET              (0x1E)
+-#define MS5611_CMD_CONV_D1            (0x40)
+-#define MS5611_CMD_CONV_D2            (0x50)
+-#define MS5611_CMD_READ_PROM          (0xA0)
+-
+-#define MS5611_OSR_ULTRA_LOW_POWER    0x00
+-#define MS5611_OSR_LOW_POWER          0x02
+-#define MS5611_OSR_STANDARD           0x04
+-#define MS5611_OSR_HIGH_RES           0x06
+-#define MS5611_OSR_ULTRA_HIGH_RES     0x08
+-
+-#define MS5611_PROM_SIZE              8
+-
+-
+-using namespace upm;
+-
+-
+-MS5611::MS5611(int i2cBus, int address)
+-{
+-    status = mraa::ERROR_INVALID_RESOURCE;
+-    i2c = new mraa::I2c(2);
+-    this->address = address;
+-    i2c->address(address);
+-    prom = new uint16_t[MS5611_PROM_SIZE];
+-    status = i2c->writeByte(MS5611_CMD_RESET);
+-    if (status != mraa::SUCCESS)
+-        UPM_THROW("Reset failed.");
+-    delayms(5);
+-    for (int i = 0; i < MS5611_PROM_SIZE; ++i) {
+-        uint8_t buf[2];
+-        int bytesRead = i2c->readBytesReg(MS5611_CMD_READ_PROM + 2*i, buf, 2);
+-        if (bytesRead != 2)
+-           UPM_THROW("PROM address failed.");
+-        prom[i] = buf[0] << 8;
+-        prom[i] |= buf[1];
+-        // printf("Read PROM entry %d = %04x\n", i, prom[i]);
+-    }
+-
+-    // printf("CRC = %X\n", promCrc4());
+-    if (promCrc4() != (prom[7] & 0x000F))
+-        UPM_THROW("PROM checksum error.");
+-    setOverSampling(ULTRA_HIGH_RES);
+-}
+-
+-
+-MS5611::~MS5611()
+-{
+-    delete[] prom;
+-    delete i2c;
+-}
+-
+-
+-int MS5611::promCrc4() {
+-    unsigned int n_rem;
+-    unsigned int crc_read;
+-    unsigned char n_bit;
+-    n_rem = 0x00;
+-    crc_read = prom[7];
+-    prom[7]=(0xFF00 & (prom[7]));
+-    for (int cnt = 0; cnt < 16; cnt++) {
+-            if (cnt%2 == 1) {
+-                n_rem ^= (unsigned short) ((prom[cnt>>1]) & 0x00FF);
+-            } else {
+-                n_rem ^= (unsigned short) (prom[cnt>>1]>>8);
+-            }
+-            for (n_bit = 8; n_bit > 0; n_bit--) {
+-                if (n_rem & (0x8000)) {
+-                    n_rem = (n_rem << 1) ^ 0x3000;
+-                } else {
+-                    n_rem = (n_rem << 1);
+-                }
+-            }
+-        }
+-    n_rem= (0x000F & (n_rem >> 12));
+-    prom[7]=crc_read;
+-    return (n_rem ^ 0x0);
+-}
+-
+-
+-// Set oversampling value
+-void MS5611::setOverSampling(OsrMode osrMode)
+-{
+-    switch (osrMode)
+-    {
+-    case ULTRA_LOW_POWER:
+-        osr = MS5611_OSR_ULTRA_LOW_POWER;
+-        samplePeriod = 1;
+-        break;
+-    case LOW_POWER:
+-        osr = MS5611_OSR_LOW_POWER;
+-        samplePeriod = 2;
+-        break;
+-    case STANDARD:
+-        osr = MS5611_OSR_STANDARD;
+-        samplePeriod = 3;
+-        break;
+-    case HIGH_RES:
+-        osr = MS5611_OSR_HIGH_RES;
+-        samplePeriod = 5;
+-        break;
+-    case ULTRA_HIGH_RES:
+-        osr = MS5611_OSR_ULTRA_HIGH_RES;
+-        samplePeriod = 10;
+-        break;
+-     }
+-}
+-
+-
+-void MS5611::delayms(int millisecs)
+-{
+-   struct timespec sleepTime;
+-   sleepTime.tv_sec = millisecs / 1000;
+-   sleepTime.tv_nsec = (millisecs % 1000) * 1000000;
+-   while ((nanosleep( &sleepTime, &sleepTime ) != 0 ) && ( errno == EINTR ) );
+-}
+-
+-uint32_t MS5611::readADC(int adcReg)
+-{
+-    uint32_t value;
+-    uint8_t buf[3];
+-    i2c->address(address);
+-    status = i2c->writeByte(adcReg + osr);
+-    if (status != mraa::SUCCESS)
+-       UPM_THROW("Convert D2 failed");
+-    delayms(100);
+-    int bytesRead = i2c->readBytesReg(MS5611_CMD_ADC_READ, buf, 3);
+-    if (bytesRead != 3)
+-       UPM_THROW("ADC read failed");
+-    // printf("%02X%02X%02X\n", buf[0], buf[1], buf[2]);
+-    value = ((uint32_t)buf[0] << 16) | ((uint32_t)buf[1] << 8) | buf[2];
+-    return value;
+-}
+-
+-uint32_t MS5611::readRawTemperature()
+-{
+-    return readADC(MS5611_CMD_CONV_D2);
+-}
+-
+-uint32_t MS5611::readRawPressure()
+-{
+-    return readADC(MS5611_CMD_CONV_D1);
+-}
+-
+-int MS5611::getTemperatureCelsius()
+-{
+-    uint32_t D2 = readRawTemperature();
+-    int64_t dT = D2 - ((uint64_t)prom[5] << 8);
+-    int32_t temp = 2000 + ((int64_t)dT * (int64_t)prom[6]) / (int64_t)(1 << 23);
+-    return (temp + 50) / 100;
+-}
+-
+-
+-int MS5611::getPressurePa()
+-{
+-    int32_t rawTemp = readRawTemperature();
+-    int32_t rawPressure = readRawPressure();
+-    int64_t dT = rawTemp - ((uint64_t)prom[5] << 8);
+-    int64_t offset  = ((uint32_t)prom[2] << 16) + ((dT * (prom[4]) >> 7));     //was  OFF  = (C[2] << 17) + dT * C[4] / (1 << 6);
+-    int64_t scaler = ((uint32_t)prom[1] << 15) + ((dT * (prom[3]) >> 8));     //was  SENS = (C[1] << 16) + dT * C[3] / (1 << 7);
+-    int32_t temp = 2000 + (int64_t)dT * (int64_t)prom[6] / (int64_t)(1 << 23);
+-
+-    if(temp < 2000) {
+-        float T1 = (temp - 2000) * (temp - 2000);
+-        int64_t offsetDelta  = (5 * T1) / 2;
+-        int64_t scalerDelta = (5 * T1) / 4;
+-
+-        if(temp < -1500) {
+-            T1 = (temp + 1500) * (temp + 1500);
+-            offsetDelta  += 7 * T1;
+-            scalerDelta += 11 * T1 / 2;
+-        }
+-        offset -= offsetDelta;
+-        scaler -= scalerDelta;
+-    }
+-    int pressure = ((((int64_t)rawPressure * scaler ) >> 21) - offset) / (double) (1 << 15);
+-    return pressure;
+-}
+-
+diff --git a/src/ms5611/ms5611.hpp b/src/ms5611/ms5611.hpp
+deleted file mode 100644
+index 95eee3b..0000000
+--- a/src/ms5611/ms5611.hpp
++++ /dev/null
+@@ -1,93 +0,0 @@
+-/*
+- * Author: Henry Bruce <henry.bruce@intel.com>
+- * Copyright (c) 2016 Intel Corporation.
+- *
+- * Permission is hereby granted, free of charge, to any person obtaining
+- * a copy of this software and associated documentation files (the
+- * "Software"), to deal in the Software without restriction, including
+- * without limitation the rights to use, copy, modify, merge, publish,
+- * distribute, sublicense, and/or sell copies of the Software, and to
+- * permit persons to whom the Software is furnished to do so, subject to
+- * the following conditions:
+- *
+- * The above copyright notice and this permission notice shall be
+- * included in all copies or substantial portions of the Software.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- */
+-
+-#include "interfaces/iPressureSensor.hpp"
+-#include "interfaces/iTemperatureSensor.hpp"
+-#include "mraa/i2c.hpp"
+-
+-namespace upm
+-{
+-
+-#define MS5611_ADDRESS 0x76
+-/**
+- * @brief ms5611 Barometric Pressure Sensor library
+- * @defgroup ms5611 libupm-ms5611
+- * @ingroup meas i2c temp pressure ipressuresensor itemperaturesensor
+- */
+-
+-/**
+- * @library ms5611
+- * @sensor ms5611
+- * @comname Barometric Pressure and Temperature Sensor
+- * @altname MS5611
+- * @type temp pressure
+- * @man meas
+- * @con i2c
+- * @web http://www.amsys.info/products/ms5611.htm
+- * @if ipressuresensor itemperaturesensor
+- *
+- * @brief API for MS5611 Barometric Pressure Sensor library
+- *
+- * Measurement Specialties
+- * [MS5611-01BA03](http://www.te.com/usa-en/product-CAT-BLPS0036.html)
+- * The MS5611 is a new generation of high resolution altimeter sensors from
+- * MEAS Switzerland with SPI and I2C bus interface. This module implements
+- * I2C only.
+- *
+- * @snippet ms5611.cxx Interesting
+- */
+-
+-class MS5611 : public IPressureSensor, public ITemperatureSensor
+-{
+-public:
+-   enum OsrMode
+-   {
+-       ULTRA_LOW_POWER, LOW_POWER, STANDARD, ULTRA_HIGH_RES, HIGH_RES
+-   };
+-
+-   MS5611(int i2cBus = 0, int address = MS5611_ADDRESS);
+-   ~MS5611();
+-   virtual const char* getModuleName() { return "ms5611"; }
+-   void setOverSampling(OsrMode osrMode);
+-   int getTemperatureCelsius();
+-   int getPressurePa();
+-
+-private:
+-   int promCrc4();
+-   uint32_t readADC(int adcReg);
+-   void delayms(int millisecs);
+-   uint32_t readRawPressure();
+-   uint32_t readRawTemperature();
+-
+-   mraa::Result status;
+-   mraa::I2c* i2c;
+-   int address;
+-   uint16_t *prom;
+-   int osr;
+-   int samplePeriod;
+-};
+-
+-
+-}
+-
+diff --git a/src/ms5611/pyupm_ms5611.i b/src/ms5611/pyupm_ms5611.i
+deleted file mode 100644
+index 9c7fc84..0000000
+--- a/src/ms5611/pyupm_ms5611.i
++++ /dev/null
+@@ -1,11 +0,0 @@
+-%module pyupm_ms5611
+-%include "../upm.i"
+-// Include doxygen-generated documentation
+-%include "pyupm_doxy2swig.i"
+-
+-%feature("autodoc", "3");
+-
+-%include "ms5611.hpp"
+-%{
+-    #include "ms5611.hpp"
+-%}
+diff --git a/src/vcap/vcap.cxx b/src/vcap/vcap.cxx
+index 9318271..86af5cc 100644
+--- a/src/vcap/vcap.cxx
++++ b/src/vcap/vcap.cxx
+@@ -186,10 +186,13 @@ bool VCAP::setResolution(int width, int height)
+   if (static_cast<int>(m_format.fmt.pix.width) != m_width)
+     {
+       if (m_debugging)
++	std::ostringstream width, pixwidth;
++	width << m_width;
++	pixwidth << m_format.fmt.pix.width;
+         cerr << __FUNCTION__ << ": Warning: Selected width "
+-             << std::to_string(m_width)
++             << width.str()
+              << " adjusted by driver to "
+-             << std::to_string(m_format.fmt.pix.width)
++             << pixwidth.str()
+              << endl;
+ 
+       m_width = m_format.fmt.pix.width;
+@@ -198,10 +201,13 @@ bool VCAP::setResolution(int width, int height)
+   if (static_cast<int>(m_format.fmt.pix.height) != m_height)
+     {
+       if (m_debugging)
++	std::ostringstream height, pixheight;
++	height << m_height;
++	pixheight << m_format.fmt.pix.height;
+         cerr << __FUNCTION__ << ": Warning: Selected height "
+-             << std::to_string(m_height)
++             << height.str()
+              << " adjusted by driver to "
+-             << std::to_string(m_format.fmt.pix.height)
++             << pixheight.str()
+              << endl;
+ 
+       m_height = m_format.fmt.pix.height;
