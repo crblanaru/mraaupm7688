@@ -1,0 +1,117 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 8dcd5ff..8fcc7eb 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -87,12 +87,7 @@ endif()
+ set (CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules ${CMAKE_MODULE_PATH})
+ 
+ # Make a version file containing the current version from git.
+-include (GetGitRevisionDescription)
+-git_describe (VERSION "--tags")
+-if ("x_${VERSION}" STREQUAL "x_GIT-NOTFOUND" OR "x_${VERSION}" STREQUAL "x_HEAD-HASH-NOTFOUND" OR "x_${VERSION}" STREQUAL "x_-128-NOTFOUND")
+-  message (WARNING " - Install git to compile a production libmraa!")
+-  set (VERSION "v1.6.1")
+-endif ()
++set (VERSION "v1.6.1")
+ 
+ message (STATUS "INFO - libmraa Version ${VERSION}")
+ message (STATUS "INFO - cmake Version ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
+@@ -165,10 +160,12 @@ if (DETECTED_ARCH STREQUAL "i586" OR DETECTED_ARCH STREQUAL "x86_64"
+   set (X86PLAT ON)
+ elseif (DETECTED_ARCH MATCHES "arm.*")
+   set (ARMPLAT ON)
++elseif (DETECTED_ARCH MATCHES "mips")
++  set (MIPSPLAT ON)
+ elseif (DETECTED_ARCH STREQUAL "MOCK")
+   set (MOCKPLAT ON)
+ else ()
+-  message (FATAL_ERROR "Only x86, arm and mock platforms currently supported")
++  message (FATAL_ERROR "Only x86, arm and mock and mips platforms currently supported")
+ endif()
+ 
+ if (BUILDSWIGPYTHON OR BUILDTESTS)
+diff --git a/api/mraa/types.h b/api/mraa/types.h
+index 773649e..d283e9d 100644
+--- a/api/mraa/types.h
++++ b/api/mraa/types.h
+@@ -56,6 +56,7 @@ typedef enum {
+ #endif
+     MRAA_PHYBOARD_WEGA = 14,        /**< The phyBOARD-Wega */
+     MRAA_DE_NANO_SOC = 15,          /**< Terasic DE-Nano-SoC Board */
++    MRAA_MTK_LINKIT = 16,           /**< Mediatek MT7688 based Linkit (Air) */
+ 
+     // USB platform extenders start at 256
+     MRAA_FTDI_FT4222 = 256,         /**< FTDI FT4222 USB to i2c bridge */
+diff --git a/include/mraa_internal.h b/include/mraa_internal.h
+index 7f1ed74..c6db113 100644
+--- a/include/mraa_internal.h
++++ b/include/mraa_internal.h
+@@ -64,6 +64,13 @@ mraa_platform_t mraa_x86_platform();
+ mraa_platform_t mraa_arm_platform();
+ 
+ /**
++ * runtime detect running mips platforms
++ *
++ * @return mraa_platform_t of the init'ed platform
++ */
++mraa_platform_t mraa_mips_platform();
++
++/**
+  * setup a mock platform
+  *
+  * @return mraa_platform_t of the init'ed platform
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 2efb1cd..7bce2f3 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -151,6 +151,12 @@ if (USBPLAT)
+   add_subdirectory(usb)
+ endif ()
+ 
++ 
++if (MIPSPLAT)
++  add_subdirectory(mips)
++  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DMIPSPLAT=1")
++endif()
++
+ if (JSONPLAT OR IMRAA)
+   find_package (JSON-C QUIET)
+   if (NOT ${JSON-C_FOUND})
+diff --git a/src/i2c/i2c.c b/src/i2c/i2c.c
+index cb980e2..313519b 100644
+--- a/src/i2c/i2c.c
++++ b/src/i2c/i2c.c
+@@ -33,7 +33,6 @@
+ #include <fcntl.h>
+ #include <inttypes.h>
+ #include <sys/types.h>
+-#include <sys/errno.h>
+ #if defined(MSYS)
+ #define __USE_LINUX_IOCTL_DEFS
+ #endif
+diff --git a/src/mraa.c b/src/mraa.c
+index 51f2d63..c425953 100644
+--- a/src/mraa.c
++++ b/src/mraa.c
+@@ -138,6 +138,9 @@ imraa_init()
+ #elif defined(ARMPLAT)
+         // Use runtime ARM platform detection
+         platform_type = mraa_arm_platform();
++#elif defined(MIPSPLAT)
++        // Use runtime ARM platform detection
++        platform_type = mraa_mips_platform();
+ #elif defined(MOCKPLAT)
+         // Use mock platform
+         platform_type = mraa_mock_platform();
+diff --git a/src/uart/uart.c b/src/uart/uart.c
+index 2c6ac7f..ece0148 100644
+--- a/src/uart/uart.c
++++ b/src/uart/uart.c
+@@ -26,6 +26,7 @@
+ 
+ #include <stdlib.h>
+ #include <sys/stat.h>
++#include <sys/time.h>
+ #include <unistd.h>
+ #include <string.h>
+ #include <termios.h>
