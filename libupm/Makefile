@@ -31,45 +31,21 @@ CMAKE_OPTIONS=-DBUILDARCH=$(CONFIG_ARCH) \
 	-DNODE_EXECUTABLE=$(STAGING_DIR_HOST)/bin/node \
 	-DSWIG_DIR=$(STAGING_DIR_HOST)/bin
 
-define Package/libupm/Default
+define Package/libupm
   SECTION:=libs
   CATEGORY:=Libraries
   DEPENDS:=+libmraa +librt +libpthread
-  SUBMENU:=IoT
-endef
-
-define Package/libupm
-  $(call Package/libupm/Default)
   TITLE:=Intel IoT sensor library - Full
 endef
 
-define Package/libupm/install/Default
+
+define Package/libupm/install
 	$(INSTALL_DIR) $(1)/usr/lib/{node/,python2.7/site-packages}; \
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libupm-$(2).so* $(1)/usr/lib/; \
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libupmc-$(2).so* $(1)/usr/lib/; \
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/jsupm_$(2) $(1)/usr/lib/node/; \
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/python2.7/site-packages/upm/{pyupm_$(2).py,_pyupm_$(2).so} \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/; \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/*.so* $(1)/usr/lib/; \
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/jsupm_* $(1)/usr/lib/node/; \
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/python2.7/site-packages/upm/{pyupm_*.py,_pyupm_*.so} \
 		$(1)/usr/lib/python2.7/site-packages/ ;
 endef
 
-define Package/libupm/install
-	$(foreach module, $(UPM_MODULES),	\
-  		$(call Package/libupm/install/Default,$(1),$(module)))
-endef
-
-define UpmPackage
-define Package/libupm-$(1)
-  $(call Package/libupm/Default)
-  TITLE:=Intel IoT sensor library - $(1)
-endef
-
-define Package/libupm-$(1)/install
-  	$(call Package/libupm/install/Default,$$(1),$(1))
-endef
-endef
-
 $(eval $(call BuildPackage,libupm))
-$(foreach package, $(UPM_MODULES),			\
-	$(eval $(call UpmPackage,$(package)))		\
-	$(eval $(call BuildPackage,libupm-$(package)))	\
-)
