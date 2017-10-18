@@ -1,6 +1,6 @@
-diff -Naur ./dfrec/dfrec.cxx /root/libupm-1.5.0/src/dfrec/dfrec.cxx
---- ./dfrec/dfrec.cxx	2017-10-16 13:19:48.000000000 +0000
-+++ /root/libupm-1.5.0/src/dfrec/dfrec.cxx	2017-10-17 08:55:05.310237288 +0000
+diff -Naur a/src/dfrec/dfrec.cxx b/src/dfrec/dfrec.cxx
+--- a/src/dfrec/dfrec.cxx	2017-10-16 13:19:48.000000000 +0000
++++ b/src/dfrec/dfrec.cxx	2017-10-17 08:55:05.310237288 +0000
 @@ -31,6 +31,18 @@
  using namespace upm;
  using namespace std;
@@ -29,9 +29,9 @@ diff -Naur ./dfrec/dfrec.cxx /root/libupm-1.5.0/src/dfrec/dfrec.cxx
      }
  }
  
-diff -Naur ./dfrorp/dfrorp.cxx /root/libupm-1.5.0/src/dfrorp/dfrorp.cxx
---- ./dfrorp/dfrorp.cxx	2017-10-16 13:19:48.000000000 +0000
-+++ /root/libupm-1.5.0/src/dfrorp/dfrorp.cxx	2017-10-17 08:55:04.398240262 +0000
+diff -Naur a/src/dfrorp/dfrorp.cxx b/src/dfrorp/dfrorp.cxx
+--- a/src/dfrorp/dfrorp.cxx	2017-10-16 13:19:48.000000000 +0000
++++ b/src/dfrorp/dfrorp.cxx	2017-10-17 08:55:04.398240262 +0000
 @@ -24,12 +24,28 @@
  
  #include <iostream>
@@ -70,9 +70,9 @@ diff -Naur ./dfrorp/dfrorp.cxx /root/libupm-1.5.0/src/dfrorp/dfrorp.cxx
      }
  }
  
-diff -Naur ./l3gd20/l3gd20.cxx /root/libupm-1.5.0/src/l3gd20/l3gd20.cxx
---- ./l3gd20/l3gd20.cxx	2017-10-16 13:19:48.000000000 +0000
-+++ /root/libupm-1.5.0/src/l3gd20/l3gd20.cxx	2017-10-17 08:55:05.466236780 +0000
+diff -Naur a/src/l3gd20/l3gd20.cxx b/src/l3gd20/l3gd20.cxx
+--- a/src/l3gd20/l3gd20.cxx	2017-10-16 13:19:48.000000000 +0000
++++ b/src/l3gd20/l3gd20.cxx	2017-10-17 08:55:05.466236780 +0000
 @@ -41,6 +41,18 @@
  using namespace upm;
  using namespace std;
@@ -116,9 +116,9 @@ diff -Naur ./l3gd20/l3gd20.cxx /root/libupm-1.5.0/src/l3gd20/l3gd20.cxx
                                 + " bytes");
      }
  
-diff -Naur ./max30100/max30100.cxx /root/libupm-1.5.0/src/max30100/max30100.cxx
---- ./max30100/max30100.cxx	2017-10-16 13:19:48.000000000 +0000
-+++ /root/libupm-1.5.0/src/max30100/max30100.cxx	2017-10-17 08:55:05.794235710 +0000
+diff -Naur a/src/max30100/max30100.cxx b/src/max30100/max30100.cxx
+--- a/src/max30100/max30100.cxx	2017-10-16 13:19:48.000000000 +0000
++++ b/src/max30100/max30100.cxx	2017-10-17 08:55:05.794235710 +0000
 @@ -29,10 +29,22 @@
  
  using namespace upm;
@@ -143,9 +143,9 @@ diff -Naur ./max30100/max30100.cxx /root/libupm-1.5.0/src/max30100/max30100.cxx
  }
  
  MAX30100::MAX30100(int16_t i2c_bus) : _dev(max30100_init(i2c_bus))
-diff -Naur ./mma7361/mma7361.cxx /root/libupm-1.5.0/src/mma7361/mma7361.cxx
---- ./mma7361/mma7361.cxx	2017-10-16 13:19:48.000000000 +0000
-+++ /root/libupm-1.5.0/src/mma7361/mma7361.cxx	2017-10-17 08:55:05.026238214 +0000
+diff -Naur a/src/mma7361/mma7361.cxx b/src/mma7361/mma7361.cxx
+--- a/src/mma7361/mma7361.cxx	2017-10-16 13:19:48.000000000 +0000
++++ b/src/mma7361/mma7361.cxx	2017-10-17 08:55:05.026238214 +0000
 @@ -31,6 +31,19 @@
  using namespace upm;
  using namespace std;
@@ -193,9 +193,9 @@ diff -Naur ./mma7361/mma7361.cxx /root/libupm-1.5.0/src/mma7361/mma7361.cxx
      }
  }
  
-diff -Naur ./ms5611/ms5611.cxx /root/libupm-1.5.0/src/ms5611/ms5611.cxx
---- ./ms5611/ms5611.cxx	2017-10-16 13:19:48.000000000 +0000
-+++ /root/libupm-1.5.0/src/ms5611/ms5611.cxx	2017-10-17 08:55:05.170237745 +0000
+diff -Naur a/src/ms5611/ms5611.cxx b/src/ms5611/ms5611.cxx
+--- a/src/ms5611/ms5611.cxx	2017-10-16 13:19:48.000000000 +0000
++++ b/src/ms5611/ms5611.cxx	2017-10-17 08:55:05.170237745 +0000
 @@ -26,6 +26,7 @@
  #include <unistd.h>
  #include <string.h>
